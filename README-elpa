@@ -1,0 +1,140 @@
+                           ━━━━━━━━━━━━━━━━━
+                            KEYMAP-POPUP.EL
+                           ━━━━━━━━━━━━━━━━━
+
+
+A macro that defines a keymap with embedded descriptions and a popup to
+display them.
+
+`One definition, two uses: direct key dispatch and interactive menu.'
+
+Requires Emacs 29.1+.
+
+
+1 Usage
+═══════
+
+  ┌────
+  │ (keymap-popup-define demo-text-map
+  │   "Text editing commands."
+  │   :group "Navigate"
+  │   "a" ("Beginning" beginning-of-buffer)
+  │   "e" ("End" end-of-buffer)
+  │   "l" ("Goto line" goto-line)
+  │   :group "Edit"
+  │   "f" ("Fill paragraph" fill-paragraph)
+  │   "s" ("Sort lines" sort-lines)
+  │   ";" ("Comment region" comment-dwim))
+  └────
+
+  Eval this, then call `(keymap-popup 'demo-text-map)' to see the popup.
+
+  This produces a real `defvar-keymap'.  Keys work directly when the map
+  is active.  Press `h' for the popup.
+
+
+1.1 Infixes
+───────────
+
+  ┌────
+  │ (keymap-popup-define demo-fill-map
+  │   :group "Options"
+  │   "j" ("Justify" :switch demo-justify)
+  │   "w" ("Fill column" :option demo-fill-col :reader read-number :prompt "Column: ")
+  │   :group "Actions"
+  │   "f" ("Fill" (lambda () (interactive)
+  │                 (let ((fill-column (or demo-fill-col fill-column)))
+  │                   (fill-paragraph (when demo-justify 'full))))))
+  └────
+
+  Switches toggle buffer-local booleans.  Options set buffer-local
+  values via a reader.  Pressing a switch or option key re-renders the
+  popup without closing it.
+
+
+1.2 Sub-menus
+─────────────
+
+  ┌────
+  │ (keymap-popup-define demo-edit-map
+  │   :group "Edit"
+  │   "f" ("Fill paragraph" fill-paragraph)
+  │   "s" ("Sort lines" sort-lines)
+  │   "r" ("Reverse region" reverse-region))
+  │ 
+  │ (keymap-popup-define demo-main-map
+  │   :group "Navigate"
+  │   "a" ("Beginning" beginning-of-buffer)
+  │   "e" ("End" end-of-buffer)
+  │   "x" ("Edit" :keymap demo-edit-map))
+  └────
+
+  Press `x' to enter the sub-menu.  `q' or `C-g' goes back.
+
+
+1.3 Inheritance
+───────────────
+
+  ┌────
+  │ (keymap-popup-define demo-base-map
+  │   :group "Common"
+  │   "g" ("Goto line" goto-line)
+  │   "r" ("Revert" revert-buffer))
+  │ 
+  │ (keymap-popup-define demo-text-view-map
+  │   :parent demo-base-map
+  │   :group "Text"
+  │   "f" ("Fill paragraph" fill-paragraph)
+  │   "s" ("Sort lines" sort-lines))
+  │ 
+  │ (keymap-popup-define demo-prog-view-map
+  │   :parent demo-base-map
+  │   :group "Code"
+  │   ";" ("Comment" comment-dwim)
+  │   "i" ("Indent region" indent-region))
+  └────
+
+  Both maps inherit Goto line and Revert from `demo-base-map'.  The
+  popup shows entries from both child and parent.
+
+
+1.4 Conditional and inapt entries
+─────────────────────────────────
+
+  ┌────
+  │ (keymap-popup-define demo-cond-map
+  │   :group "Actions"
+  │   "f" ("Fill paragraph" fill-paragraph)
+  │   ;; only shown when region is active
+  │   "s" ("Sort lines" sort-lines :if (lambda () mark-active))
+  │   ;; visible but grayed out in read-only buffers
+  │   "d" ("Delete char" delete-char :inapt-if (lambda () buffer-read-only)))
+  └────
+
+
+1.5 Prefix argument
+───────────────────
+
+  ┌────
+  │ (keymap-popup-define demo-prefix-map
+  │   :group "Actions"
+  │   "f" ("Fill paragraph" fill-paragraph :c-u "justify")
+  │   "s" ("Sort lines" sort-lines :c-u "reverse"))
+  └────
+
+  In the popup, `C-u' enters prefix mode: entries with `:c-u' are
+  highlighted, others are dimmed.  The next key dispatches with the
+  prefix argument.  `C-g' cancels prefix mode.
+
+
+1.6 Other features
+──────────────────
+
+  • `:stay-open t' on a command keeps the popup open after dispatch
+  • `:popup-key "?"' changes the popup key (default `h')
+  • Dynamic descriptions: use a function instead of a string
+  • Dynamic group names: `:group (lambda () (format "Items (%d)"
+    count))'
+  • `:row' starts a new row of columns in the popup layout
+  • `keymap-popup-add-entry' / `keymap-popup-remove-entry' for runtime
+    modification
