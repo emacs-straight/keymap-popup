@@ -121,8 +121,8 @@ Requires Emacs 29.1+.
   │                              (propertize kp-test--name 'face 'success)
   │                            (propertize "?" 'face 'warning))))
   │        (lambda () (interactive)
-  │          (setq-local kp-test--name (read-string "Your name: ")))
-  │        :stay-open t)
+  │          (setq-local kp-test--name (read-string "Your name: "))
+  │          (keymap-popup kp-test--map)))
   │   :group "Navigate"
   │   "s" ("Sub-menu" :keymap kp-test--sub-map)
   │   "q" ("Quit" quit-window)
