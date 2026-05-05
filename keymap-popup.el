@@ -3,7 +3,7 @@
 ;; Copyright (C) 2026  Free Software Foundation, Inc.
 
 ;; Author: Thanos Apollo <public@thanosapollo.org>
-;; Version: 0.2.4
+;; Version: 0.2.5
 ;; Package-Requires: ((emacs "29.1"))
 ;; Keywords: convenience
 ;; URL: https://codeberg.org/thanosapollo/emacs-keymap-popup
@@ -44,7 +44,7 @@ Only used by `keymap-popup-backend-side-window'.
 Common values:
   (display-buffer-in-side-window (side . bottom))  - frame-wide
   (display-buffer-below-selected)                  - current window only"
-  :type 'sexp
+  :type display-buffer--action-custom-type
   :group 'keymap-popup)
 
 (defcustom keymap-popup-backend #'keymap-popup-backend-side-window
@@ -264,22 +264,21 @@ Each row is a list of group plists with :name and :entries."
 
 ;;; Infix generators
 
-(defun keymap-popup--switch-forms (map-name entry)
-  "Return (defvar-local defun) forms for switch ENTRY in MAP-NAME."
-  (let* ((variable (plist-get entry :variable))
-         (description (plist-get entry :description))
-         (fn-name (intern (format "%s--toggle-%s" map-name variable))))
-    (list
-     `(defvar-local ,variable nil)
-     `(defun ,fn-name ()
-        ,(format "Toggle %s." description)
-        (interactive)
-        (setq-local ,variable (not ,variable))
-        (message "%s: %s" ,description (if ,variable "on" "off"))))))
+(defun keymap-popup--create-switch (map-name variable description)
+  "Create buffer-local VARIABLE with toggle command for MAP-NAME.
+DESCRIPTION is used in the toggle message."
+  (defvar-1 variable nil)
+  (make-variable-buffer-local variable)
+  (defalias (intern (format "%s--toggle-%s" map-name variable))
+    (lambda ()
+      (:documentation (format "Toggle %s." description))
+      (interactive)
+      (set variable (not (symbol-value variable)))
+      (message "%s: %s" description (if (symbol-value variable) "on" "off")))))
 
 (defun keymap-popup--entry-command (map-name entry)
   "Return the command to bind in MAP-NAME's keymap for ENTRY."
-  (pcase (plist-get entry :type)
+  (pcase-exhaustive (plist-get entry :type)
     ('suffix (plist-get entry :command))
     ('switch (intern (format "%s--toggle-%s" map-name (plist-get entry :variable))))
     ('keymap (let ((target (plist-get entry :target)))
@@ -295,29 +294,20 @@ MAP-NAME is used to derive generated command names."
            append (list (plist-get entry :key)
                         (if (symbolp cmd) `#',cmd cmd))))
 
-(defun keymap-popup--quote-if-needed (form)
-  "Quote FORM unless it is a lambda, in which case return as-is."
-  (if (and (consp form) (eq (car form) 'lambda))
-      form
-    `',form))
-
 (defun keymap-popup--build-entry-form (entry)
-  "Build a `list' form for a single ENTRY that evaluates lambdas properly."
+  "Build a `list' form for a single ENTRY."
   (let* ((type (plist-get entry :type))
-         (key (plist-get entry :key))
-         (desc-form (keymap-popup--quote-if-needed
-                     (plist-get entry :description)))
-         (type-props (pcase type
-                       ('suffix `(:command ,(keymap-popup--quote-if-needed
-                                             (plist-get entry :command))
-					   ,@(when (plist-get entry :stay-open)
-					       '(:stay-open t))))
+         (type-props (pcase-exhaustive type
+                       ('suffix (let ((cmd (plist-get entry :command)))
+                                  `(:command ,(if (symbolp cmd) `#',cmd cmd)
+                                             ,@(and (plist-get entry :stay-open)
+                                                    '(:stay-open t)))))
                        ('keymap `(:target ,(plist-get entry :target)))
                        ('switch `(:variable ',(plist-get entry :variable)))))
          (if-pred (plist-get entry :if))
          (inapt-if (plist-get entry :inapt-if)))
-    `(list :key ,key
-           :description ,desc-form
+    `(list :key ,(plist-get entry :key)
+           :description ,(plist-get entry :description)
            :type ',type
            ,@type-props
            ,@(and if-pred (list :if if-pred))
@@ -350,6 +340,18 @@ Uses list calls so lambdas get compiled."
   (and (eq (car rest) keyword)
        (cons (cadr rest) (cddr rest))))
 
+(defun keymap-popup--consume-keywords (rest keywords)
+  "Consume KEYWORDS from REST in order.
+Returns (VALUES . REMAINING) where VALUES is a list of extracted
+values (nil for absent keywords)."
+  (if (null keywords)
+      (cons nil rest)
+    (let* ((pair (keymap-popup--consume-keyword rest (car keywords)))
+           (value (and pair (car pair)))
+           (remaining (if pair (cdr pair) rest))
+           (sub (keymap-popup--consume-keywords remaining (cdr keywords))))
+      (cons (cons value (car sub)) (cdr sub)))))
+
 (defun keymap-popup--extract-macro-opts (body)
   "Extract macro options from BODY.
 Returns (DOCSTRING POPUP-KEY EXIT-KEY PARENT DESCRIPTION PERSISTENT BINDINGS).
@@ -359,22 +361,9 @@ Unspecified keywords yield nil."
                              (not (listp (cadr body))))
                          (car body)))
          (rest (if docstring (cdr body) body))
-         (popup-pair (keymap-popup--consume-keyword rest :popup-key))
-         (popup-key (and popup-pair (car popup-pair)))
-         (rest (if popup-pair (cdr popup-pair) rest))
-         (exit-pair (keymap-popup--consume-keyword rest :exit-key))
-         (exit-key (and exit-pair (car exit-pair)))
-         (rest (if exit-pair (cdr exit-pair) rest))
-         (parent-pair (keymap-popup--consume-keyword rest :parent))
-         (parent (and parent-pair (car parent-pair)))
-         (rest (if parent-pair (cdr parent-pair) rest))
-         (desc-pair (keymap-popup--consume-keyword rest :description))
-         (description (and desc-pair (car desc-pair)))
-         (rest (if desc-pair (cdr desc-pair) rest))
-         (persist-pair (keymap-popup--consume-keyword rest :persistent))
-         (persistent (and persist-pair (car persist-pair)))
-         (bindings (if persist-pair (cdr persist-pair) rest)))
-    (list docstring popup-key exit-key parent description persistent bindings)))
+         (result (keymap-popup--consume-keywords
+                  rest '(:popup-key :exit-key :parent :description :persistent))))
+    (append (list docstring) (car result) (list (cdr result)))))
 
 ;;;###autoload
 (defmacro keymap-popup-define (name &rest body)
@@ -395,25 +384,28 @@ pairs."
                (all-entries (cl-loop for row in rows
 				     append (cl-loop for group in row
 						     append (plist-get group :entries))))
-               (infix-forms (cl-loop for entry in all-entries
-				     append (pcase (plist-get entry :type)
-                                              ('switch (keymap-popup--switch-forms name entry))
-                                              (_ nil))))
+               (switch-entries (cl-loop for entry in all-entries
+					when (eq (plist-get entry :type) 'switch)
+					collect entry))
                (keymap-pairs (keymap-popup--build-keymap-pairs name all-entries)))
     `(progn
-       ,@infix-forms
+       ,@(mapcar (lambda (e)
+                   `(keymap-popup--create-switch
+                     ',name ',(plist-get e :variable)
+                     ,(plist-get e :description)))
+                 switch-entries)
        (defvar-keymap ,name
-         ,@(when docstring (list :doc docstring))
-         ,@(when parent (list :parent parent))
+         ,@(and docstring (list :doc docstring))
+         ,@(and parent (list :parent parent))
          ,@keymap-pairs
          ,popup-key (lambda () (interactive) (keymap-popup ,name)))
        (setf (keymap-popup--meta ,name 'descriptions)
              ,(keymap-popup--build-descriptions-form rows))
        (setf (keymap-popup--meta ,name 'exit-key) ,exit-key)
-       ,@(when description
-           `((setf (keymap-popup--meta ,name 'description) ,description)))
-       ,@(when persistent
-           `((setf (keymap-popup--meta ,name 'persistent) 'yes))))))
+       ,@(and description
+              `((setf (keymap-popup--meta ,name 'description) ,description)))
+       ,@(and persistent
+              `((setf (keymap-popup--meta ,name 'persistent) 'yes))))))
 
 ;;;###autoload
 (defmacro keymap-popup-annotate (keymap &rest body)
@@ -440,15 +432,15 @@ time, so the popup always reflects the user's current bindings."
        (setf (keymap-popup--meta ,keymap 'descriptions)
              ,(keymap-popup--build-descriptions-form rows))
        (setf (keymap-popup--meta ,keymap 'annotated) 'yes)
-       ,@(when popup-key
-           `((keymap-set ,keymap ,popup-key
-                         (lambda () (interactive) (keymap-popup ,keymap)))))
-       ,@(when exit-key
-           `((setf (keymap-popup--meta ,keymap 'exit-key) ,exit-key)))
-       ,@(when description
-           `((setf (keymap-popup--meta ,keymap 'description) ,description)))
-       ,@(when persistent
-           `((setf (keymap-popup--meta ,keymap 'persistent) 'yes))))))
+       ,@(and popup-key
+              `((keymap-set ,keymap ,popup-key
+                            (lambda () (interactive) (keymap-popup ,keymap)))))
+       ,@(and exit-key
+              `((setf (keymap-popup--meta ,keymap 'exit-key) ,exit-key)))
+       ,@(and description
+              `((setf (keymap-popup--meta ,keymap 'description) ,description)))
+       ,@(and persistent
+              `((setf (keymap-popup--meta ,keymap 'persistent) 'yes))))))
 
 ;;; Public API
 
@@ -529,9 +521,7 @@ KEY-WIDTH pads the key column for alignment."
            (c-u-desc (plist-get entry :c-u))
            (raw-key (plist-get entry :key))
            (padded-key (if key-width
-                           (concat raw-key
-                                   (make-string (max 0 (- key-width (length raw-key)))
-                                                ?\s))
+                           (string-pad raw-key key-width)
                          raw-key))
            (key-str (propertize padded-key 'face 'keymap-popup-key))
            (value-str (if (eq type 'switch)
@@ -899,7 +889,8 @@ Reads state from BUF.  Consumes the reentering flag on read."
             ((memq this-command
                    '(universal-argument universal-argument-more
 					digit-argument negative-argument
-					keymap-popup--prefix-argument)))
+					keymap-popup--prefix-argument
+					describe-key describe-key-briefly)))
             ((equal key-str exit-key) nil)
             ((eq this-command 'keyboard-quit) nil)
             ((buffer-local-value 'keymap-popup--persistent buf))
@@ -946,28 +937,28 @@ Includes keys with entry-level or group-level :inapt-if."
   (keymap-popup--collect-entries
    descriptions
    (lambda (entry group)
-     (when (and (plist-get entry :key)
-                (or (plist-get entry :inapt-if)
-                    (plist-get group :inapt-if)))
-       (plist-get entry :key)))))
+     (and-let* ((key (plist-get entry :key))
+                (_ (or (plist-get entry :inapt-if)
+                       (plist-get group :inapt-if))))
+       key))))
 
 (defun keymap-popup--stay-open-suffix-keys (descriptions)
   "Return key-strings for :stay-open suffix entries in DESCRIPTIONS."
   (keymap-popup--collect-entries
    descriptions
    (lambda (entry _group)
-     (when (and (plist-get entry :key)
-                (eq (plist-get entry :type) 'suffix)
-                (plist-get entry :stay-open))
-       (plist-get entry :key)))))
+     (and-let* ((key (plist-get entry :key))
+                (_ (eq (plist-get entry :type) 'suffix))
+                (_ (plist-get entry :stay-open)))
+       key))))
 
 (defun keymap-popup--switch-keys (descriptions)
   "Return key-strings for switch entries in DESCRIPTIONS."
   (keymap-popup--collect-entries
    descriptions
    (lambda (entry _group)
-     (when (eq (plist-get entry :type) 'switch)
-       (plist-get entry :key)))))
+     (and (eq (plist-get entry :type) 'switch)
+          (plist-get entry :key)))))
 
 (defun keymap-popup--submenu-keys (descriptions)
   "Return alist of (KEY-STRING . TARGET-KEYMAP) from DESCRIPTIONS."
