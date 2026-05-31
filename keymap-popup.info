@@ -25,7 +25,6 @@ Keymap Popup User Manual
 * Customization::
 * When to use this vs transient::
 * Contributing::
-* GNU Free Documentation License::
 
 -- The Detailed Node Listing --
 
@@ -557,7 +556,7 @@ popup does not block ‘M-x’.  There is no class hierarchy to learn, and
 state lives wherever you choose to put it.
 
 
-File: keymap-popup.info,  Node: Contributing,  Next: GNU Free Documentation License,  Prev: When to use this vs transient,  Up: Top
+File: keymap-popup.info,  Node: Contributing,  Prev: When to use this vs transient,  Up: Top
 
 11 Contributing
 ***************
@@ -569,46 +568,39 @@ Source is a single file, ‘keymap-popup.el’, with tests in
                    -l tests/keymap-popup-tests.el \
                    -f ert-run-tests-batch-and-exit
 
-
-File: keymap-popup.info,  Node: GNU Free Documentation License,  Prev: Contributing,  Up: Top
-
-Appendix A GNU Free Documentation License
-*****************************************
-
 
 
 Tag Table:
 Node: Top256
-Node: Introduction1250
-Node: Installation1651
-Node: From source1828
-Node: With use-package2036
-Node: Quick start2228
-Node: Defining keymaps2793
-Node: Macro syntax3088
-Node: Groups and rows4273
-Node: Dynamic descriptions4959
-Node: Sharing bindings with parent5507
-Node: Adding and removing entries at runtime6307
-Node: Showing the popup7046
-Node: Display backends7468
-Node: Persistent popups7960
-Node: Dismissing programmatically8514
-Node: Special bindings8908
-Node: Sub-menus with keymap9473
-Node: Toggles with switch10019
-Node: Stay-open commands with stay-open10687
-Node: Disabling entries with inapt-if11221
-Node: Hiding entries with if12007
-Node: Prefix-arg variants with c-u12502
-Node: Prompting and re-entry13264
-Node: Annotating existing keymaps14324
-Node: Customization15480
-Node: User options15683
-Node: Faces16522
-Node: When to use this vs transient16967
-Node: Contributing17958
-Node: GNU Free Documentation License18391
+Node: Introduction1215
+Node: Installation1616
+Node: From source1793
+Node: With use-package2001
+Node: Quick start2193
+Node: Defining keymaps2758
+Node: Macro syntax3053
+Node: Groups and rows4238
+Node: Dynamic descriptions4924
+Node: Sharing bindings with parent5472
+Node: Adding and removing entries at runtime6272
+Node: Showing the popup7011
+Node: Display backends7433
+Node: Persistent popups7925
+Node: Dismissing programmatically8479
+Node: Special bindings8873
+Node: Sub-menus with keymap9438
+Node: Toggles with switch9984
+Node: Stay-open commands with stay-open10652
+Node: Disabling entries with inapt-if11186
+Node: Hiding entries with if11972
+Node: Prefix-arg variants with c-u12467
+Node: Prompting and re-entry13229
+Node: Annotating existing keymaps14289
+Node: Customization15445
+Node: User options15648
+Node: Faces16487
+Node: When to use this vs transient16932
+Node: Contributing17923
 
 End Tag Table
 
