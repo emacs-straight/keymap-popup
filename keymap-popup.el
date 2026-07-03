@@ -37,6 +37,7 @@
 
 (require 'cl-lib)
 (require 'seq)
+(require 'subr-x)
 
 (defgroup keymap-popup nil
   "Described keymaps with popup help."
@@ -57,9 +58,9 @@ Common values:
 Each backend function receives a single buffer argument.
 :show displays the buffer, :fit refits after content changes,
 :hide removes the display and cleans up."
-  :type '(choice (const :tag "Side window" keymap-popup-backend-side-window)
-                 (const :tag "Child frame" keymap-popup-backend-child-frame)
-                 function)
+  :type '(choice (function-item :tag "Side window" keymap-popup-backend-side-window)
+                 (function-item :tag "Child frame" keymap-popup-backend-child-frame)
+                 (function :tag "Custom backend"))
   :group 'keymap-popup)
 
 (defcustom keymap-popup-child-frame-parameters
@@ -222,33 +223,23 @@ for key-based entries, or (DESCRIPTION &rest PROPS) for annotated ones."
 Returns a list of rows, each row a list of (NAME . FLAT-ENTRIES) chunks.
 `:group' starts a new group within the current row.
 `:row' starts a new row."
-  (keymap-popup--split-groups-1 bindings nil nil nil nil))
-
-(defun keymap-popup--split-groups-1 (rest name entries groups rows)
-  "Recursive helper for `keymap-popup--split-groups'.
-REST is remaining bindings, NAME is current group name, ENTRIES
-is accumulated entries (reversed), GROUPS is current row's groups
-\(reversed), ROWS is accumulated rows (reversed)."
-  (let ((flush-group (if entries
-                         (cons (cons name (reverse entries)) groups)
-                       groups)))
-    (cond
-     ((null rest)
-      (reverse (if flush-group
-                   (cons (reverse flush-group) rows)
-                 rows)))
-     ((eq (car rest) :row)
-      (keymap-popup--split-groups-1
-       (cdr rest) nil nil nil
-       (if flush-group (cons (reverse flush-group) rows) rows)))
-     ((eq (car rest) :group)
-      (keymap-popup--split-groups-1
-       (cddr rest) (cadr rest) nil flush-group rows))
-     (t
-      (keymap-popup--split-groups-1
-       (cddr rest) name
-       (cons (cons (car rest) (cadr rest)) entries)
-       groups rows)))))
+  (named-let split ((rest bindings) (name nil) (entries nil)
+                    (groups nil) (rows nil))
+    (let ((flushed (if entries
+                       (cons (cons name (reverse entries)) groups)
+                     groups)))
+      (cond
+       ((null rest)
+        (reverse (if flushed (cons (reverse flushed) rows) rows)))
+       ((eq (car rest) :row)
+        (split (cdr rest) nil nil nil
+               (if flushed (cons (reverse flushed) rows) rows)))
+       ((eq (car rest) :group)
+        (split (cddr rest) (cadr rest) nil flushed rows))
+       (t
+        (split (cddr rest) name
+               (cons (cons (car rest) (cadr rest)) entries)
+               groups rows))))))
 
 (defun keymap-popup--parse-group-name (raw)
   "Parse RAW group name into (NAME . PROPS).
@@ -730,14 +721,10 @@ rendered with the inapt face."
 			    result)
                   result))))))
 
-(defun keymap-popup--string-width-visible (str)
-  "Return the visible width of STR, ignoring text properties."
-  (string-width (substring-no-properties str)))
-
 (defun keymap-popup--column-width (col)
   "Return the max visible width of lines in COL."
   (cl-loop for line in col
-           maximize (keymap-popup--string-width-visible line)))
+           maximize (string-width line)))
 
 (defun keymap-popup--join-columns (columns separator col-widths)
   "Join COLUMNS side by side with SEPARATOR between them.
@@ -863,31 +850,16 @@ Returns the entry plist, or nil."
                                              when (equal (plist-get entry :key) key-str)
                                              return entry))))
 
-(defun keymap-popup--infix-p (descriptions key-str)
-  "Return non-nil if KEY-STR maps to a switch entry in DESCRIPTIONS."
-  (and-let* ((entry (keymap-popup--find-entry-by-key descriptions key-str)))
-    (eq (plist-get entry :type) 'switch)))
-
-(defun keymap-popup--keymap-target (descriptions key-str)
-  "Return the target map symbol if KEY-STR is a :keymap entry in DESCRIPTIONS."
-  (and-let* ((entry (keymap-popup--find-entry-by-key descriptions key-str))
-             (_ (eq (plist-get entry :type) 'keymap)))
-    (plist-get entry :target)))
-
-(defun keymap-popup--stay-open-p (descriptions key-str)
-  "Return non-nil if KEY-STR should keep the popup open in DESCRIPTIONS.
-True for switches and suffixes with :stay-open."
-  (and-let* ((entry (keymap-popup--find-entry-by-key descriptions key-str)))
-    (or (eq (plist-get entry :type) 'switch)
-        (plist-get entry :stay-open))))
-
 (defun keymap-popup--keep-popup-p (descriptions key-str)
   "Return non-nil if KEY-STR should keep the popup open in DESCRIPTIONS.
-True for switches, stay-open suffixes, and :keymap entries.
-Inapt-key handling is folded into the keep-pred via `this-command'."
-  (or (keymap-popup--infix-p descriptions key-str)
-      (keymap-popup--stay-open-p descriptions key-str)
-      (keymap-popup--keymap-target descriptions key-str)))
+True for switches, stay-open suffixes, and :keymap entries with a
+target.  Inapt-key handling is folded into the keep-pred via
+`this-command'."
+  (and-let* ((entry (keymap-popup--find-entry-by-key descriptions key-str)))
+    (or (eq (plist-get entry :type) 'switch)
+        (plist-get entry :stay-open)
+        (and (eq (plist-get entry :type) 'keymap)
+             (plist-get entry :target)))))
 
 (defun keymap-popup--refresh-buffer (buf descriptions &optional prefix-mode)
   "Re-render popup BUF with DESCRIPTIONS, refit via backend.
@@ -1140,11 +1112,7 @@ Returns plist (:switches KEYS :submenus PAIRS :stay-open KEYS)."
                   keymap-popup--active-exit-key exit-key
                   keymap-popup--prefix-mode nil)
       (keymap-popup--refresh buf)
-      (let ((wrapper (keymap-popup--build-wrapper-map child-keymap descs buf exit-key)))
-        (setq-local keymap-popup--wrapper-map wrapper)
-        (set-transient-map wrapper
-                           (keymap-popup--make-keep-pred buf)
-                           (keymap-popup--make-on-exit buf))))))
+      (keymap-popup--activate-transient-map buf child-keymap descs exit-key))))
 
 (defun keymap-popup--prefix-argument ()
   "Toggle prefix argument mode in the active popup.
@@ -1162,9 +1130,10 @@ subsequent digit and `negative-argument' keys refine the prefix."
       (universal-argument--mode))))
 
 (defun keymap-popup--core-overrides (exit-key)
-  "Return alist of core overrides for EXIT-KEY and prefix toggle."
-  (list (cons exit-key
-              (lambda () (interactive)))
+  "Return alist of core overrides for EXIT-KEY and prefix toggle.
+The exit key is bound to `ignore'; the keep-pred exits on the key
+itself, so the binding only needs to exist and do nothing."
+  (list (cons exit-key #'ignore)
         (cons "C-u" #'keymap-popup--prefix-argument)))
 
 (defun keymap-popup--inapt-stub ()
@@ -1190,6 +1159,14 @@ prefix-mode state so `\\[universal-argument]' is not consumed."
                       (keymap-popup--push-submenu buf target)))))
           submenu-pairs))
 
+(defun keymap-popup--call-real-binding (keymap key-str)
+  "Call KEY-STR's live binding in KEYMAP if it is a command.
+Return the binding, which may be nil or the inapt stub."
+  (let ((cmd (keymap-lookup keymap key-str)))
+    (when (commandp cmd)
+      (call-interactively cmd))
+    cmd))
+
 (defun keymap-popup--switch-overrides (keymap switch-keys buf)
   "Return alist of switch key overrides for KEYMAP's SWITCH-KEYS in BUF.
 Wraps the toggle command with prefix-mode consumption.  When the
@@ -1200,9 +1177,7 @@ prefix-mode is preserved."
   (mapcar (lambda (key-str)
             (cons key-str
                   (lambda () (interactive)
-                    (let ((cmd (keymap-lookup keymap key-str)))
-                      (when (commandp cmd)
-                        (call-interactively cmd))
+                    (let ((cmd (keymap-popup--call-real-binding keymap key-str)))
                       (unless (or (null cmd)
                                   (eq cmd #'keymap-popup--inapt-stub))
                         (when (buffer-local-value 'keymap-popup--prefix-mode buf)
@@ -1218,9 +1193,7 @@ Each command executes and refreshes the popup in place."
   (mapcar (lambda (key-str)
             (cons key-str
                   (lambda () (interactive)
-                    (let ((cmd (keymap-lookup keymap key-str)))
-                      (when (commandp cmd)
-                        (call-interactively cmd)))
+                    (keymap-popup--call-real-binding keymap key-str)
                     (keymap-popup--refresh buf))))
           stay-open-keys))
 
@@ -1246,6 +1219,7 @@ so the wrapper carries no inapt logic of its own."
 (defun keymap-popup-dismiss ()
   "Dismiss the active popup, if any.
 Deactivates the transient map and removes the popup display."
+  (interactive)
   (when-let* ((buf (get-buffer keymap-popup--buffer-name))
               (map (buffer-local-value 'keymap-popup--wrapper-map buf)))
     (internal-pop-keymap map 'overriding-terminal-local-map)
