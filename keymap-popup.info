@@ -56,6 +56,10 @@ Special bindings
 * Hiding entries with if::
 * Prefix-arg variants with c-u::
 
+Annotating existing keymaps
+
+* Attaching descriptions built from data::
+
 Customization
 
 * User options::
@@ -493,6 +497,48 @@ current bindings.
 user's binding).  String-key entries are allowed too - that's how
 sub-menus attach to an annotated keymap.
 
+* Menu:
+
+* Attaching descriptions built from data::
+
+
+File: keymap-popup.info,  Node: Attaching descriptions built from data,  Up: Annotating existing keymaps
+
+8.1 Attaching descriptions built from data
+==========================================
+
+Both macros take bindings written literally in source.  When the menu
+itself is computed at runtime - an anonymous keymap, entries generated
+from a list - use the function ‘keymap-popup-attach’:
+
+     (defun my-project-popup ()
+       "Pick a recent project from a popup."
+       (interactive)
+       (let* ((projects (seq-take (project-known-project-roots) 9))
+              (map (make-sparse-keymap))
+              (bindings
+               (cl-loop for root in projects
+                        for key from ?1
+                        for cmd = (let ((r root))
+                                    (lambda () (interactive)
+                                      (project-switch-project r)))
+                        do (keymap-set map (char-to-string key) cmd)
+                        append (list (char-to-string key)
+                                     (list (abbreviate-file-name root) cmd)))))
+         (keymap-popup (keymap-popup-attach
+                        map (append '(:group "Projects") bindings)))))
+
+   Signature:
+
+   • ‘(keymap-popup-attach KEYMAP BINDINGS &rest OPTS)’
+
+   BINDINGS is an evaluated list in the same shape as
+‘keymap-popup-annotate’'s body; commands and predicates are actual
+objects rather than forms.  OPTS accepts ‘:exit-key’, ‘:description’,
+and ‘:persistent’.  Unlike the macros, no keys are bound and no commands
+are defined - keyed entries should already be bound in KEYMAP.  Returns
+KEYMAP.
+
 
 File: keymap-popup.info,  Node: Customization,  Next: When to use this vs transient,  Prev: Annotating existing keymaps,  Up: Top
 
@@ -572,35 +618,36 @@ Source is a single file, ‘keymap-popup.el’, with tests in
 
 Tag Table:
 Node: Top256
-Node: Introduction1215
-Node: Installation1616
-Node: From source1793
-Node: With use-package2001
-Node: Quick start2193
-Node: Defining keymaps2758
-Node: Macro syntax3053
-Node: Groups and rows4238
-Node: Dynamic descriptions4924
-Node: Sharing bindings with parent5472
-Node: Adding and removing entries at runtime6272
-Node: Showing the popup7011
-Node: Display backends7433
-Node: Persistent popups7925
-Node: Dismissing programmatically8479
-Node: Special bindings8873
-Node: Sub-menus with keymap9438
-Node: Toggles with switch9984
-Node: Stay-open commands with stay-open10652
-Node: Disabling entries with inapt-if11186
-Node: Hiding entries with if11972
-Node: Prefix-arg variants with c-u12467
-Node: Prompting and re-entry13229
-Node: Annotating existing keymaps14289
-Node: Customization15445
-Node: User options15648
-Node: Faces16487
-Node: When to use this vs transient16932
-Node: Contributing17923
+Node: Introduction1288
+Node: Installation1689
+Node: From source1866
+Node: With use-package2074
+Node: Quick start2266
+Node: Defining keymaps2831
+Node: Macro syntax3126
+Node: Groups and rows4311
+Node: Dynamic descriptions4997
+Node: Sharing bindings with parent5545
+Node: Adding and removing entries at runtime6345
+Node: Showing the popup7084
+Node: Display backends7506
+Node: Persistent popups7998
+Node: Dismissing programmatically8552
+Node: Special bindings8946
+Node: Sub-menus with keymap9511
+Node: Toggles with switch10057
+Node: Stay-open commands with stay-open10725
+Node: Disabling entries with inapt-if11259
+Node: Hiding entries with if12045
+Node: Prefix-arg variants with c-u12540
+Node: Prompting and re-entry13302
+Node: Annotating existing keymaps14362
+Node: Attaching descriptions built from data15571
+Node: Customization17222
+Node: User options17425
+Node: Faces18264
+Node: When to use this vs transient18709
+Node: Contributing19700
 
 End Tag Table
 
