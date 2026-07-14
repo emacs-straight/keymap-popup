@@ -171,7 +171,8 @@ same keywords but does _not_ apply defaults for ‘:popup-key’ or
      user's buffer, so it sees buffer-local state).
    • ‘COMMAND’ - command symbol or a ‘(lambda () (interactive) ...)’.
    • ‘PROP’ - one of ‘:if’, ‘:inapt-if’, ‘:stay-open’, ‘:c-u’ (see *note
-     Special bindings::).
+     Special bindings::).  ‘:stay-open’ is a boolean flag and may omit
+     its ‘t’ value.
 
 
 File: keymap-popup.info,  Node: Groups and rows,  Next: Dynamic descriptions,  Prev: Macro syntax,  Up: Defining keymaps
@@ -377,8 +378,8 @@ File: keymap-popup.info,  Node: Stay-open commands with stay-open,  Next: Disabl
 
      (keymap-popup-define my-mark-map
        :group "Mark"
-       "m" ("Mark" dired-mark :stay-open t)
-       "u" ("Unmark" dired-unmark :stay-open t)
+       "m" ("Mark" dired-mark :stay-open)
+       "u" ("Unmark" dired-unmark :stay-open)
        "U" ("Unmark all" dired-unmark-all-marks))
 
    For an entire popup, prefer ‘:persistent t’ (see *note Persistent
@@ -535,9 +536,10 @@ from a list - use the function ‘keymap-popup-attach’:
    BINDINGS is an evaluated list in the same shape as
 ‘keymap-popup-annotate’'s body; commands and predicates are actual
 objects rather than forms.  OPTS accepts ‘:exit-key’, ‘:description’,
-and ‘:persistent’.  Unlike the macros, no keys are bound and no commands
-are defined - keyed entries should already be bound in KEYMAP.  Returns
-KEYMAP.
+and ‘:persistent’.  Reattaching replaces prior descriptions and options,
+so omitted options return to their defaults.  Unlike the macros, no keys
+are bound and no commands are defined - keyed entries should already be
+bound in KEYMAP.  Returns KEYMAP.
 
 
 File: keymap-popup.info,  Node: Customization,  Next: When to use this vs transient,  Prev: Annotating existing keymaps,  Up: Top
@@ -625,29 +627,29 @@ Node: With use-package2074
 Node: Quick start2266
 Node: Defining keymaps2831
 Node: Macro syntax3126
-Node: Groups and rows4311
-Node: Dynamic descriptions4997
-Node: Sharing bindings with parent5545
-Node: Adding and removing entries at runtime6345
-Node: Showing the popup7084
-Node: Display backends7506
-Node: Persistent popups7998
-Node: Dismissing programmatically8552
-Node: Special bindings8946
-Node: Sub-menus with keymap9511
-Node: Toggles with switch10057
-Node: Stay-open commands with stay-open10725
-Node: Disabling entries with inapt-if11259
-Node: Hiding entries with if12045
-Node: Prefix-arg variants with c-u12540
-Node: Prompting and re-entry13302
-Node: Annotating existing keymaps14362
-Node: Attaching descriptions built from data15571
-Node: Customization17222
-Node: User options17425
-Node: Faces18264
-Node: When to use this vs transient18709
-Node: Contributing19700
+Node: Groups and rows4384
+Node: Dynamic descriptions5070
+Node: Sharing bindings with parent5618
+Node: Adding and removing entries at runtime6418
+Node: Showing the popup7157
+Node: Display backends7579
+Node: Persistent popups8071
+Node: Dismissing programmatically8625
+Node: Special bindings9019
+Node: Sub-menus with keymap9584
+Node: Toggles with switch10130
+Node: Stay-open commands with stay-open10798
+Node: Disabling entries with inapt-if11328
+Node: Hiding entries with if12114
+Node: Prefix-arg variants with c-u12609
+Node: Prompting and re-entry13371
+Node: Annotating existing keymaps14431
+Node: Attaching descriptions built from data15640
+Node: Customization17390
+Node: User options17593
+Node: Faces18432
+Node: When to use this vs transient18877
+Node: Contributing19868
 
 End Tag Table
 
