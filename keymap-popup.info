@@ -155,11 +155,12 @@ File: keymap-popup.info,  Node: Macro syntax,  Next: Groups and rows,  Up: Defin
        :persistent BOOL
        BINDING...)
 
-   Only ‘MAP-NAME’ and the bindings are required; every keyword above is
-optional and may appear in any order.  ‘keymap-popup-annotate’ accepts
-the display keywords above except ‘:parent’, but does _not_ apply
-defaults for ‘:popup-key’ or ‘:exit-key’ - it never binds keys unless
-asked.
+   Only ‘MAP-NAME’ and the bindings are required.  Leading options are
+optional and may appear in any order before the first binding.
+‘keymap-popup-annotate’ accepts the display keywords above except
+‘:parent’, but does _not_ apply defaults for ‘:popup-key’ or ‘:exit-key’
+- it never binds keys unless asked.  A popup key may not replace an
+ordinary existing binding; such a collision signals an error.
 
    A binding takes one of three forms:
 
@@ -171,6 +172,8 @@ asked.
    • ‘DESC’ - string or zero-arg function (called at render time in the
      user's buffer, so it sees buffer-local state).
    • ‘COMMAND’ - command symbol or a ‘(lambda () (interactive) ...)’.
+   • ‘MAP’ - keymap variable symbol.  It may be defined after its
+     parent; its value is resolved when the sub-menu opens.
    • ‘PROP’ - one of ‘:if’, ‘:inapt-if’, ‘:stay-open’, ‘:c-u’ (see *note
      Special bindings::).  ‘:stay-open’ is a boolean flag and may omit
      its ‘t’ value.
@@ -256,7 +259,8 @@ File: keymap-popup.info,  Node: Adding and removing entries at runtime,  Prev: S
 
    Both mutate the keymap and its descriptions in place.  Re-adding a
 key replaces the prior entry (in whatever group it was in), matching
-‘keymap-set’'s semantics.
+‘keymap-set’'s semantics.  Both require existing popup metadata;
+removing the last entry clears that metadata.
 
 
 File: keymap-popup.info,  Node: Showing the popup,  Next: Special bindings,  Prev: Defining keymaps,  Up: Top
@@ -373,10 +377,9 @@ File: keymap-popup.info,  Node: Toggles with switch,  Next: Stay-open commands w
        "V" ("No video" :switch yeetube-mpv-no-video
             :if (lambda () yeetube--show-settings)))
 
-   The variable is auto-declared via ‘defvar’ +
-‘make-variable-buffer-local’; each buffer gets its own value on first
-set.  Switches always keep the popup open - no need to add ‘:stay-open
-t’.
+   The variable is auto-declared with ‘defvar-local’; each buffer gets
+its own value.  Switches always keep the popup open - no need to add
+‘:stay-open t’.
 
 
 File: keymap-popup.info,  Node: Stay-open commands with stay-open,  Next: Disabling entries with inapt-if,  Prev: Toggles with switch,  Up: Special bindings
@@ -549,8 +552,9 @@ accepts ‘:exit-key’, ‘:description’, and ‘:persistent’.  Reattaching
 replaces prior descriptions and options, so omitted options return to
 their defaults.  Unlike the macros, no keys are bound and no commands
 are defined - keyed entries should already be bound in KEYMAP.  Runtime
-values and options are validated before metadata is attached.  Returns
-KEYMAP.
+values and options are validated before metadata is attached.  ‘:switch’
+entries require ‘keymap-popup-define’ and are rejected by this runtime
+API.  Returns KEYMAP.
 
 
 File: keymap-popup.info,  Node: Customization,  Next: When to use this vs transient,  Prev: Annotating existing keymaps,  Up: Top
@@ -638,29 +642,29 @@ Node: With use-package2074
 Node: Quick start2266
 Node: Defining keymaps2831
 Node: Macro syntax3126
-Node: Groups and rows4644
-Node: Dynamic descriptions5330
-Node: Sharing bindings with parent5878
-Node: Adding and removing entries at runtime6678
-Node: Showing the popup7417
-Node: Display backends7839
-Node: Persistent popups8331
-Node: Dismissing programmatically8995
-Node: Special bindings9389
-Node: Sub-menus with keymap9954
-Node: Toggles with switch10500
-Node: Stay-open commands with stay-open11168
-Node: Disabling entries with inapt-if11698
-Node: Hiding entries with if12484
-Node: Prefix-arg variants with c-u12979
-Node: Prompting and re-entry13741
-Node: Annotating existing keymaps14801
-Node: Attaching descriptions built from data16010
-Node: Customization17928
-Node: User options18131
-Node: Faces18970
-Node: When to use this vs transient19415
-Node: Contributing20406
+Node: Groups and rows4892
+Node: Dynamic descriptions5578
+Node: Sharing bindings with parent6126
+Node: Adding and removing entries at runtime6926
+Node: Showing the popup7750
+Node: Display backends8172
+Node: Persistent popups8664
+Node: Dismissing programmatically9328
+Node: Special bindings9722
+Node: Sub-menus with keymap10287
+Node: Toggles with switch10833
+Node: Stay-open commands with stay-open11460
+Node: Disabling entries with inapt-if11990
+Node: Hiding entries with if12776
+Node: Prefix-arg variants with c-u13271
+Node: Prompting and re-entry14033
+Node: Annotating existing keymaps15093
+Node: Attaching descriptions built from data16302
+Node: Customization18315
+Node: User options18518
+Node: Faces19357
+Node: When to use this vs transient19802
+Node: Contributing20793
 
 End Tag Table
 
