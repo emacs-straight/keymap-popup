@@ -339,6 +339,11 @@ Predicate quick reference:
    • ‘:inapt-if’ - _grey out_ the entry and block its key when the
      predicate returns non-nil.
 
+   Predicates may be evaluated repeatedly.  ‘:if’ runs during ordinary
+keymap lookup as well as popup rendering; ‘:inapt-if’ runs while
+rendering and handling popup keys.  Keep both cheap and free of side
+effects.
+
 * Menu:
 
 * Sub-menus with keymap::
@@ -651,20 +656,20 @@ Node: Display backends8172
 Node: Persistent popups8664
 Node: Dismissing programmatically9328
 Node: Special bindings9722
-Node: Sub-menus with keymap10287
-Node: Toggles with switch10833
-Node: Stay-open commands with stay-open11460
-Node: Disabling entries with inapt-if11990
-Node: Hiding entries with if12776
-Node: Prefix-arg variants with c-u13271
-Node: Prompting and re-entry14033
-Node: Annotating existing keymaps15093
-Node: Attaching descriptions built from data16302
-Node: Customization18315
-Node: User options18518
-Node: Faces19357
-Node: When to use this vs transient19802
-Node: Contributing20793
+Node: Sub-menus with keymap10510
+Node: Toggles with switch11056
+Node: Stay-open commands with stay-open11683
+Node: Disabling entries with inapt-if12213
+Node: Hiding entries with if12999
+Node: Prefix-arg variants with c-u13494
+Node: Prompting and re-entry14256
+Node: Annotating existing keymaps15316
+Node: Attaching descriptions built from data16525
+Node: Customization18538
+Node: User options18741
+Node: Faces19580
+Node: When to use this vs transient20025
+Node: Contributing21016
 
 End Tag Table
 
