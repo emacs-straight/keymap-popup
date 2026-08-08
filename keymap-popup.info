@@ -160,7 +160,8 @@ optional and may appear in any order before the first binding.
 ‘keymap-popup-annotate’ accepts the display keywords above except
 ‘:parent’, but does _not_ apply defaults for ‘:popup-key’ or ‘:exit-key’
 - it never binds keys unless asked.  A popup key may not replace an
-ordinary existing binding; such a collision signals an error.
+ordinary local binding; such a collision signals an error.  Inherited
+bindings may be shadowed.
 
    A binding takes one of three forms:
 
@@ -647,29 +648,29 @@ Node: With use-package2074
 Node: Quick start2266
 Node: Defining keymaps2831
 Node: Macro syntax3126
-Node: Groups and rows4892
-Node: Dynamic descriptions5578
-Node: Sharing bindings with parent6126
-Node: Adding and removing entries at runtime6926
-Node: Showing the popup7750
-Node: Display backends8172
-Node: Persistent popups8664
-Node: Dismissing programmatically9328
-Node: Special bindings9722
-Node: Sub-menus with keymap10510
-Node: Toggles with switch11056
-Node: Stay-open commands with stay-open11683
-Node: Disabling entries with inapt-if12213
-Node: Hiding entries with if12999
-Node: Prefix-arg variants with c-u13494
-Node: Prompting and re-entry14256
-Node: Annotating existing keymaps15316
-Node: Attaching descriptions built from data16525
-Node: Customization18538
-Node: User options18741
-Node: Faces19580
-Node: When to use this vs transient20025
-Node: Contributing21016
+Node: Groups and rows4926
+Node: Dynamic descriptions5612
+Node: Sharing bindings with parent6160
+Node: Adding and removing entries at runtime6960
+Node: Showing the popup7784
+Node: Display backends8206
+Node: Persistent popups8698
+Node: Dismissing programmatically9362
+Node: Special bindings9756
+Node: Sub-menus with keymap10544
+Node: Toggles with switch11090
+Node: Stay-open commands with stay-open11717
+Node: Disabling entries with inapt-if12247
+Node: Hiding entries with if13033
+Node: Prefix-arg variants with c-u13528
+Node: Prompting and re-entry14290
+Node: Annotating existing keymaps15350
+Node: Attaching descriptions built from data16559
+Node: Customization18572
+Node: User options18775
+Node: Faces19614
+Node: When to use this vs transient20059
+Node: Contributing21050
 
 End Tag Table
 
