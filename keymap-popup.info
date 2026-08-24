@@ -201,9 +201,15 @@ File: keymap-popup.info,  Node: Groups and rows,  Next: Dynamic descriptions,  P
        "A" ("Add feed" my-feed-add)
        "D" ("Remove feed" my-feed-remove))
 
-   ‘:row’ between groups starts a fresh row of columns beneath the
-first.  Groups may attach their own predicates: ‘:group ("Bulk" :if PRED
-:inapt-if PRED)’.
+   At display time, groups flow from left to right and automatically
+continue on another display row when the popup window is too narrow.
+This applies even when the declaration contains no ‘:row’.  An
+individual group wider than the window is truncated with an ellipsis
+rather than disturbing the column alignment.
+
+   ‘:row’ between groups forces a fresh row beneath the first regardless
+of the available width.  Groups may attach their own predicates: ‘:group
+("Bulk" :if PRED :inapt-if PRED)’.
 
 
 File: keymap-popup.info,  Node: Dynamic descriptions,  Next: Sharing bindings with parent,  Prev: Groups and rows,  Up: Defining keymaps
@@ -649,28 +655,28 @@ Node: Quick start2266
 Node: Defining keymaps2831
 Node: Macro syntax3126
 Node: Groups and rows4926
-Node: Dynamic descriptions5612
-Node: Sharing bindings with parent6160
-Node: Adding and removing entries at runtime6960
-Node: Showing the popup7784
-Node: Display backends8206
-Node: Persistent popups8698
-Node: Dismissing programmatically9362
-Node: Special bindings9756
-Node: Sub-menus with keymap10544
-Node: Toggles with switch11090
-Node: Stay-open commands with stay-open11717
-Node: Disabling entries with inapt-if12247
-Node: Hiding entries with if13033
-Node: Prefix-arg variants with c-u13528
-Node: Prompting and re-entry14290
-Node: Annotating existing keymaps15350
-Node: Attaching descriptions built from data16559
-Node: Customization18572
-Node: User options18775
-Node: Faces19614
-Node: When to use this vs transient20059
-Node: Contributing21050
+Node: Dynamic descriptions5955
+Node: Sharing bindings with parent6503
+Node: Adding and removing entries at runtime7303
+Node: Showing the popup8127
+Node: Display backends8549
+Node: Persistent popups9041
+Node: Dismissing programmatically9705
+Node: Special bindings10099
+Node: Sub-menus with keymap10887
+Node: Toggles with switch11433
+Node: Stay-open commands with stay-open12060
+Node: Disabling entries with inapt-if12590
+Node: Hiding entries with if13376
+Node: Prefix-arg variants with c-u13871
+Node: Prompting and re-entry14633
+Node: Annotating existing keymaps15693
+Node: Attaching descriptions built from data16902
+Node: Customization18915
+Node: User options19118
+Node: Faces19957
+Node: When to use this vs transient20402
+Node: Contributing21393
 
 End Tag Table
 
