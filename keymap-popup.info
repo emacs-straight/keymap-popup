@@ -313,7 +313,7 @@ By default the popup dismisses after a suffix command runs.
 ‘:persistent t’ keeps it open until the exit key or ‘C-g’:
 
      (keymap-popup-define my-map :persistent t ...)
-     (keymap-popup-annotate dired-mode-map :popup-key "?" :persistent t ...)
+     (keymap-popup-annotate dired-mode-map :popup-key "C-c C-p" :persistent t ...)
      (setopt keymap-popup-persistent t)        ; global default
 
    Per-keymap setting wins over the global one.  Use ‘:persistent nil’
@@ -501,7 +501,7 @@ at popup time via ‘where-is-internal’, so the popup tracks the user's
 current bindings.
 
      (keymap-popup-annotate dired-mode-map
-       :popup-key "?"
+       :popup-key "C-c C-p"
        :persistent t
        :description (lambda ()
                       (format "Dired: %s" (abbreviate-file-name default-directory)))
@@ -520,6 +520,9 @@ current bindings.
    Entries are ‘COMMAND-SYMBOL DESCRIPTION’ (the key comes from the
 user's binding).  String-key entries are allowed too - that's how
 sub-menus attach to an annotated keymap.
+
+   The example uses ‘C-c C-p’ to preserve Dired's ‘?’ help binding.
+Choose an unbound popup key; existing local bindings are never replaced.
 
 * Menu:
 
@@ -661,22 +664,22 @@ Node: Adding and removing entries at runtime7303
 Node: Showing the popup8127
 Node: Display backends8549
 Node: Persistent popups9041
-Node: Dismissing programmatically9705
-Node: Special bindings10099
-Node: Sub-menus with keymap10887
-Node: Toggles with switch11433
-Node: Stay-open commands with stay-open12060
-Node: Disabling entries with inapt-if12590
-Node: Hiding entries with if13376
-Node: Prefix-arg variants with c-u13871
-Node: Prompting and re-entry14633
-Node: Annotating existing keymaps15693
-Node: Attaching descriptions built from data16902
-Node: Customization18915
-Node: User options19118
-Node: Faces19957
-Node: When to use this vs transient20402
-Node: Contributing21393
+Node: Dismissing programmatically9711
+Node: Special bindings10105
+Node: Sub-menus with keymap10893
+Node: Toggles with switch11439
+Node: Stay-open commands with stay-open12066
+Node: Disabling entries with inapt-if12596
+Node: Hiding entries with if13382
+Node: Prefix-arg variants with c-u13877
+Node: Prompting and re-entry14639
+Node: Annotating existing keymaps15699
+Node: Attaching descriptions built from data17064
+Node: Customization19077
+Node: User options19280
+Node: Faces20119
+Node: When to use this vs transient20564
+Node: Contributing21555
 
 End Tag Table
 
